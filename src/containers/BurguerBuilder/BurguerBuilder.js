@@ -1,5 +1,7 @@
 import React, { Component } from "react";
 
+
+import axios from '../../axios-orders';
 import Aux from '../../hoc/Aux'
 import Burguer from '../../components/Burguer/Burguer'
 import BuildControls from '../../components/Burguer/BuildControls/BuildControls';
@@ -26,17 +28,17 @@ class BurguerBuilder extends Component {
         purchasing: false
     }
 
-    updatePurchasedState (ingredients) {
-        
+    updatePurchasedState(ingredients) {
+
         //fazer por filter.
         const sum = Object.keys(ingredients).map(igKey => {
             return ingredients[igKey]
         })
-        .reduce( (sum, el) => {
-            return sum + el;
-        }, 0);
+            .reduce((sum, el) => {
+                return sum + el;
+            }, 0);
 
-        this.setState({purchasable: sum > 0})
+        this.setState({ purchasable: sum > 0 })
 
     }
 
@@ -48,47 +50,64 @@ class BurguerBuilder extends Component {
         };
 
         updatedIngredients[type] = updatedCount;
-        
+
         const priceAddition = INGREDIENT_PRICES[type];
         const oldPrice = this.state.totalPrice;
         const newPrice = oldPrice + priceAddition;
 
-        this.setState({totalPrice: newPrice, ingredients: updatedIngredients});
+        this.setState({ totalPrice: newPrice, ingredients: updatedIngredients });
         this.updatePurchasedState(updatedIngredients);
     }
 
     removeIngredientHandler = (type) => {
         const oldCount = this.state.ingredients[type];
 
-        if(oldCount <= 0){
+        if (oldCount <= 0) {
             return;
         }
 
-        const updatedCount = oldCount -1;
+        const updatedCount = oldCount - 1;
         const updatedIngredients = {
             ...this.state.ingredients
         };
 
         updatedIngredients[type] = updatedCount;
-        
+
         const priceDeduction = INGREDIENT_PRICES[type];
         const oldPrice = this.state.totalPrice;
         const newPrice = oldPrice - priceDeduction;
 
-        this.setState({totalPrice: newPrice, ingredients: updatedIngredients});
+        this.setState({ totalPrice: newPrice, ingredients: updatedIngredients });
         this.updatePurchasedState(updatedIngredients);
     }
 
     purchaseHandler = () => {
-        this.setState({purchasing: true});
+        this.setState({ purchasing: true });
     }
 
     purchaseCancelHandler = () => {
-        this.setState({purchasing: false});
+        this.setState({ purchasing: false });
     }
 
     purchaseContinueHandler = () => {
-        alert('You continue!');
+        const order = {
+            ingredients: this.state.ingredients,
+            price: this.state.totalPrice, //bom é calcular o preco no BE
+            customer: {
+                name: 'Thiago Orlandini',
+                adress: {
+                    street: "Test street 1",
+                    zipCode: '4321',
+                    country: 'Brasil'
+                },
+                email: 'thiago@teste.com'
+            }, 
+            deliveryMethod: 'fastest'
+        }
+        
+        axios.post('/orders.json', order)
+            .then(response => console.log(response))
+            .catch(error => console.log(error));
     }
 
     render() {
@@ -97,8 +116,8 @@ class BurguerBuilder extends Component {
             ...this.state.ingredients
         };
 
-        for (let key in disabledInfo){
-           disabledInfo[key] =  disabledInfo[key] <= 0;
+        for (let key in disabledInfo) {
+            disabledInfo[key] = disabledInfo[key] <= 0;
         }
 
         return (
@@ -108,10 +127,10 @@ class BurguerBuilder extends Component {
                         price={this.state.totalPrice}
                         purchaseCanceled={this.purchaseCancelHandler}
                         purchaseContinued={this.purchaseContinueHandler}
-                        ingredients={this.state.ingredients}/>
+                        ingredients={this.state.ingredients} />
                 </Modal>
                 <Burguer ingredients={this.state.ingredients} />
-                <BuildControls 
+                <BuildControls
                     ingredientAdded={this.addIngredientHandler}
                     ingredientRemoved={this.removeIngredientHandler}
                     disabled={disabledInfo}
